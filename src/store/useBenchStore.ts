@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import type { Bench, BenchExperience, MaterialType, OrientationType, ShadeLevelType, NoiseLevelType, StayDurationType } from '@/types';
-import { loadBenches, saveBenches } from '@/utils/storage';
+import type { Bench, BenchExperience, MaterialType, OrientationType, ShadeLevelType, NoiseLevelType, TimePeriodType } from '@/types';
+import { loadBenches, saveBenches, loadSelectedPeriod, saveSelectedPeriod } from '@/utils/storage';
 import { generateId } from '@/utils/comfort';
 import { mockBenches } from '@/data/mockBenches';
 
@@ -11,6 +11,7 @@ interface BenchState {
   orientationFilter: OrientationType | null;
   shadeFilter: ShadeLevelType | null;
   noiseFilter: NoiseLevelType | null;
+  selectedPeriod: TimePeriodType | null;
   initialized: boolean;
 }
 
@@ -21,8 +22,9 @@ interface BenchActions {
   setOrientationFilter: (orientation: OrientationType | null) => void;
   setShadeFilter: (shade: ShadeLevelType | null) => void;
   setNoiseFilter: (noise: NoiseLevelType | null) => void;
+  setSelectedPeriod: (period: TimePeriodType | null) => void;
   clearFilters: () => void;
-  addBench: (bench: Omit<Bench, 'id' | 'createdAt' | 'updatedAt' | 'experiences'>) => void;
+  addBench: (bench: Omit<Bench, 'id' | 'createdAt' | 'updatedAt' | 'experiences'>, experiences?: Omit<BenchExperience, 'id' | 'benchId'>[]) => void;
   updateBench: (id: string, updates: Partial<Bench>) => void;
   deleteBench: (id: string) => void;
   getBenchById: (id: string) => Bench | undefined;
@@ -39,6 +41,7 @@ const initialState: BenchState = {
   orientationFilter: null,
   shadeFilter: null,
   noiseFilter: null,
+  selectedPeriod: loadSelectedPeriod(),
   initialized: false,
 };
 
@@ -61,6 +64,11 @@ export const useBenchStore = create<BenchState & BenchActions>((set, get) => ({
   setShadeFilter: (shade) => set({ shadeFilter: shade }),
   setNoiseFilter: (noise) => set({ noiseFilter: noise }),
 
+  setSelectedPeriod: (period) => {
+    set({ selectedPeriod: period });
+    saveSelectedPeriod(period);
+  },
+
   clearFilters: () => set({
     searchQuery: '',
     materialFilter: null,
@@ -69,12 +77,13 @@ export const useBenchStore = create<BenchState & BenchActions>((set, get) => ({
     noiseFilter: null,
   }),
 
-  addBench: (benchData) => {
+  addBench: (benchData, experiences = []) => {
     const now = new Date().toISOString();
+    const benchId = generateId();
     const newBench: Bench = {
       ...benchData,
-      id: generateId(),
-      experiences: [],
+      id: benchId,
+      experiences: experiences.map((exp) => ({ ...exp, id: generateId(), benchId })),
       createdAt: now,
       updatedAt: now,
     };

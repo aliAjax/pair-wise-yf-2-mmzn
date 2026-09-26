@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useBenchStore } from '@/store/useBenchStore';
 import FilterBar from '@/components/FilterBar/FilterBar';
+import TimePeriodSelector from '@/components/TimePeriodSelector/TimePeriodSelector';
 import BenchCard from '@/components/BenchCard/BenchCard';
 import { Armchair } from 'lucide-react';
 
@@ -24,6 +25,8 @@ export default function ListPage() {
           记录城市中那些被忽略的休憩角落
         </p>
       </div>
+
+      <TimePeriodSelector />
 
       <FilterBar />
 

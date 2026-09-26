@@ -3,7 +3,8 @@ import { MapPin, Clock, Volume2, Sun, Armchair } from 'lucide-react';
 import type { Bench } from '@/types';
 import { MATERIAL_LABELS, SHADE_LABELS, NOISE_LABELS, STAY_DURATION_LABELS } from '@/types';
 import Rating from '@/components/Rating/Rating';
-import { calculateComfortScore, getComfortLevel, getComfortColor } from '@/utils/comfort';
+import { calculatePeriodComfort, getComfortLevel, getComfortColor } from '@/utils/comfort';
+import { useBenchStore } from '@/store/useBenchStore';
 
 interface BenchCardProps {
   bench: Bench;
@@ -12,7 +13,8 @@ interface BenchCardProps {
 
 export default function BenchCard({ bench, index = 0 }: BenchCardProps) {
   const navigate = useNavigate();
-  const comfortScore = calculateComfortScore(bench);
+  const selectedPeriod = useBenchStore((state) => state.selectedPeriod);
+  const { score: comfortScore, estimated } = calculatePeriodComfort(bench, selectedPeriod);
   const comfortLevel = getComfortLevel(comfortScore);
   const comfortColor = getComfortColor(comfortScore);
 
@@ -30,9 +32,12 @@ export default function BenchCard({ bench, index = 0 }: BenchCardProps) {
           </div>
         </div>
         
-        <div className="absolute top-3 right-3 px-2 py-1 bg-white/80 backdrop-blur-sm rounded-full text-xs font-medium">
+        <div className="absolute top-3 right-3 px-2 py-1 bg-white/80 backdrop-blur-sm rounded-full text-xs font-medium flex items-center gap-1.5">
+          {estimated && (
+            <span className="px-1.5 py-0.5 bg-ochre/10 text-ochre rounded">估算</span>
+          )}
           <span className={comfortColor}>{comfortLevel}</span>
-          <span className="text-ink-light ml-1">{comfortScore}</span>
+          <span className="text-ink-light">{comfortScore}</span>
         </div>
 
         <div className="absolute top-3 left-3 px-2 py-1 bg-white/80 backdrop-blur-sm rounded-full text-xs text-ink-light">

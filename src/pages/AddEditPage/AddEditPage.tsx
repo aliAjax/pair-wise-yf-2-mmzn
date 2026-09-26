@@ -37,9 +37,8 @@ export default function AddEditPage() {
   const navigate = useNavigate();
   const isEdit = !!id;
 
-  const { getBenchById, addBench, updateBench, initialize, initialized, addExperience, updateExperience, deleteExperience } = useBenchStore();
+  const { getBenchById, addBench, updateBench, initialize, initialized } = useBenchStore();
   const existingBench = id ? getBenchById(id) : undefined;
-
   const [formData, setFormData] = useState({
     name: '',
     location: '',
@@ -108,14 +107,11 @@ export default function AddEditPage() {
 
   const handleDeleteExperience = (expId: string) => {
     setExperiences(experiences.filter((exp) => exp.id !== expId));
-    if (isEdit && id) {
-      deleteExperience(id, expId);
-    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       alert('请输入长椅名称');
       return;
@@ -126,19 +122,13 @@ export default function AddEditPage() {
     }
 
     if (isEdit && id) {
-      updateBench(id, formData);
-      experiences.forEach((exp) => {
-        const existingExp = existingBench?.experiences.find((e) => e.id === exp.id);
-        if (existingExp) {
-          updateExperience(id, exp.id, exp);
-        } else {
-          addExperience(id, exp);
-        }
-      });
+      const savedExperiences = experiences.map((exp) => ({ ...exp, benchId: id }));
+      updateBench(id, { ...formData, experiences: savedExperiences });
     } else {
-      addBench({
-        ...formData,
-      });
+      addBench(
+        { ...formData },
+        experiences.map(({ timePeriod, notes, rating }) => ({ timePeriod, notes, rating }))
+      );
     }
 
     navigate(-1);
@@ -399,7 +389,7 @@ export default function AddEditPage() {
 
             {experiences.length > 0 ? (
               <div className="space-y-4">
-                {experiences.map((exp, index) => {
+                {experiences.map((exp) => {
                   const TimeIcon = timePeriodIcons[exp.timePeriod];
                   return (
                     <div

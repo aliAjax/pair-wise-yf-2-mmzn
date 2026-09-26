@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Armchair, Info } from 'lucide-react';
 import { useBenchStore } from '@/store/useBenchStore';
-import { calculateComfortScore, getComfortColor } from '@/utils/comfort';
+import TimePeriodSelector from '@/components/TimePeriodSelector/TimePeriodSelector';
+import { calculatePeriodComfort, getComfortColor } from '@/utils/comfort';
+import { TIME_PERIOD_LABELS } from '@/types';
 import type { Bench } from '@/types';
 
 export default function MapPage() {
-  const { benches, initialize, initialized } = useBenchStore();
+  const { benches, initialize, initialized, selectedPeriod } = useBenchStore();
   const navigate = useNavigate();
   const [hoveredBench, setHoveredBench] = useState<Bench | null>(null);
 
@@ -36,9 +38,13 @@ export default function MapPage() {
           地图分布
         </h2>
         <p className="text-ink-light text-sm">
-          查看长椅在城市中的分布位置
+          {selectedPeriod
+            ? `查看长椅在${TIME_PERIOD_LABELS[selectedPeriod]}时段的舒适度`
+            : '查看长椅在城市中的分布位置'}
         </p>
       </div>
+
+      <TimePeriodSelector />
 
       <div className="paper-texture rounded-xl shadow-paper overflow-hidden">
         <div className="relative w-full h-[600px] bg-gradient-to-br from-moss-green/5 via-warm-beige to-ochre/5">
@@ -59,7 +65,7 @@ export default function MapPage() {
 
           {benches.map((bench) => {
             const position = getPositionStyle(bench);
-            const comfortScore = calculateComfortScore(bench);
+            const { score: comfortScore, estimated } = calculatePeriodComfort(bench, selectedPeriod);
             const colorClass = getComfortColor(comfortScore);
             
             return (
@@ -81,6 +87,12 @@ export default function MapPage() {
                   <div className="absolute top-1 left-1/2 -translate-x-1/2">
                     <Armchair className="w-3 h-3 text-white" />
                   </div>
+                  {estimated && (
+                    <span
+                      className="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-dashed border-ochre bg-white/70"
+                      title="该时段暂无体验记录，按综合分估算"
+                    />
+                  )}
                 </div>
 
                 {hoveredBench?.id === bench.id && (
@@ -92,11 +104,20 @@ export default function MapPage() {
                       {bench.location}
                     </p>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-ink-light">舒适度</span>
+                      <span className="text-xs text-ink-light">
+                        {selectedPeriod ? `${TIME_PERIOD_LABELS[selectedPeriod]}舒适度` : '舒适度'}
+                      </span>
                       <span className={`text-sm font-medium ${colorClass}`}>
                         {comfortScore}
                       </span>
                     </div>
+                    {estimated && (
+                      <div className="mt-1.5">
+                        <span className="px-1.5 py-0.5 bg-ochre/10 text-ochre text-xs rounded">
+                          估算 · 暂无{TIME_PERIOD_LABELS[selectedPeriod!]}体验
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
               </button>
@@ -125,6 +146,12 @@ export default function MapPage() {
                 <MapPin className="w-4 h-4 text-ink-light" fill="currentColor" />
                 <span className="text-xs text-ink-light">一般/较差</span>
               </div>
+              {selectedPeriod && (
+                <div className="flex items-center gap-2 pt-1 border-t border-deep-brown/10">
+                  <span className="w-3 h-3 rounded-full border-2 border-dashed border-ochre bg-white/70 flex-shrink-0" />
+                  <span className="text-xs text-ink-light">估算（无该时段体验）</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

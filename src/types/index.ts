@@ -70,6 +70,8 @@ export const STAY_DURATION_LABELS: Record<StayDurationType, string> = {
   verylong: '1小时以上',
 };
 
+export const TIME_PERIODS: TimePeriodType[] = ['morning', 'noon', 'afternoon', 'evening', 'night'];
+
 export const TIME_PERIOD_LABELS: Record<TimePeriodType, string> = {
   morning: '早晨',
   noon: '中午',
