@@ -2,12 +2,12 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trophy, MapPin, Star, Crown, Medal, Award } from 'lucide-react';
 import { useBenchStore } from '@/store/useBenchStore';
-import { calculateComfortScore, getComfortLevel, getComfortColor } from '@/utils/comfort';
-import { MATERIAL_LABELS, SHADE_LABELS } from '@/types';
-import type { Bench } from '@/types';
+import TimePeriodSelector from '@/components/TimePeriodSelector/TimePeriodSelector';
+import { calculateComfortScore, getComfortLevel, getComfortColor, isEstimatedComfort } from '@/utils/comfort';
+import { MATERIAL_LABELS, SHADE_LABELS, TIME_PERIOD_LABELS } from '@/types';
 
 export default function RankingPage() {
-  const { benches, initialize, initialized } = useBenchStore();
+  const { benches, initialize, initialized, timePeriodFilter } = useBenchStore();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -17,7 +17,7 @@ export default function RankingPage() {
   }, [initialized, initialize]);
 
   const rankedBenches = [...benches]
-    .sort((a, b) => calculateComfortScore(b) - calculateComfortScore(a))
+    .sort((a, b) => calculateComfortScore(b, timePeriodFilter) - calculateComfortScore(a, timePeriodFilter))
     .map((bench, index) => ({ bench, rank: index + 1 }));
 
   const getRankIcon = (rank: number) => {
@@ -41,15 +41,20 @@ export default function RankingPage() {
           舒适度排行
         </h2>
         <p className="text-ink-light text-sm">
-          综合评分最高的长椅
+          {timePeriodFilter
+            ? `按「${TIME_PERIOD_LABELS[timePeriodFilter]}」时段体验排序`
+            : '综合评分最高的长椅'}
         </p>
       </div>
 
+      <TimePeriodSelector />
+
       <div className="space-y-3">
         {rankedBenches.map(({ bench, rank }) => {
-          const comfortScore = calculateComfortScore(bench);
+          const comfortScore = calculateComfortScore(bench, timePeriodFilter);
           const comfortLevel = getComfortLevel(comfortScore);
           const comfortColor = getComfortColor(comfortScore);
+          const estimated = isEstimatedComfort(bench, timePeriodFilter);
 
           return (
             <div
@@ -72,6 +77,11 @@ export default function RankingPage() {
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${comfortColor} bg-white/80`}>
                       {comfortLevel}
                     </span>
+                    {estimated && (
+                      <span className="px-2 py-0.5 rounded-full text-xs text-ink-light bg-white/60 border border-deep-brown/10">
+                        估算
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-1 text-ink-light text-sm mb-2">

@@ -3,7 +3,8 @@ import { MapPin, Clock, Volume2, Sun, Armchair } from 'lucide-react';
 import type { Bench } from '@/types';
 import { MATERIAL_LABELS, SHADE_LABELS, NOISE_LABELS, STAY_DURATION_LABELS } from '@/types';
 import Rating from '@/components/Rating/Rating';
-import { calculateComfortScore, getComfortLevel, getComfortColor } from '@/utils/comfort';
+import { useBenchStore } from '@/store/useBenchStore';
+import { calculateComfortScore, getComfortLevel, getComfortColor, isEstimatedComfort } from '@/utils/comfort';
 
 interface BenchCardProps {
   bench: Bench;
@@ -12,9 +13,11 @@ interface BenchCardProps {
 
 export default function BenchCard({ bench, index = 0 }: BenchCardProps) {
   const navigate = useNavigate();
-  const comfortScore = calculateComfortScore(bench);
+  const { timePeriodFilter } = useBenchStore();
+  const comfortScore = calculateComfortScore(bench, timePeriodFilter);
   const comfortLevel = getComfortLevel(comfortScore);
   const comfortColor = getComfortColor(comfortScore);
+  const estimated = isEstimatedComfort(bench, timePeriodFilter);
 
   const staggerClass = `stagger-${(index % 6) + 1}`;
 
@@ -33,6 +36,7 @@ export default function BenchCard({ bench, index = 0 }: BenchCardProps) {
         <div className="absolute top-3 right-3 px-2 py-1 bg-white/80 backdrop-blur-sm rounded-full text-xs font-medium">
           <span className={comfortColor}>{comfortLevel}</span>
           <span className="text-ink-light ml-1">{comfortScore}</span>
+          {estimated && <span className="text-ink-light/60 ml-1">估算</span>}
         </div>
 
         <div className="absolute top-3 left-3 px-2 py-1 bg-white/80 backdrop-blur-sm rounded-full text-xs text-ink-light">

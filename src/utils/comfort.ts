@@ -1,4 +1,4 @@
-import type { Bench, MaterialType, ShadeLevelType, NoiseLevelType } from '@/types';
+import type { Bench, BenchExperience, MaterialType, ShadeLevelType, NoiseLevelType, TimePeriodType } from '@/types';
 
 const materialScores: Record<MaterialType, number> = {
   wood: 5,
@@ -20,16 +20,26 @@ const noiseScores: Record<NoiseLevelType, number> = {
   noisy: 1,
 };
 
-export function calculateComfortScore(bench: Bench): number {
+export function getExperienceForPeriod(bench: Bench, timePeriod: TimePeriodType): BenchExperience | undefined {
+  return bench.experiences.find((exp) => exp.timePeriod === timePeriod);
+}
+
+export function calculateComfortScore(bench: Bench, timePeriod: TimePeriodType | null = null): number {
   const backrestScore = bench.hasBackrest ? 5 : 2;
   const shadeScore = shadeScores[bench.shadeLevel];
   const noiseScore = noiseScores[bench.noiseLevel];
   const materialScore = materialScores[bench.material];
-  const userRating = bench.rating;
+  // 选中时段且有对应体验记录时，用体验评分替换档案总评；否则沿用综合分
+  const experience = timePeriod ? getExperienceForPeriod(bench, timePeriod) : undefined;
+  const userRating = experience ? experience.rating : bench.rating;
 
   const comfort = backrestScore * 0.2 + shadeScore * 0.2 + noiseScore * 0.2 + materialScore * 0.15 + userRating * 0.25;
 
   return Math.round(comfort * 10) / 10;
+}
+
+export function isEstimatedComfort(bench: Bench, timePeriod: TimePeriodType | null): boolean {
+  return timePeriod !== null && !getExperienceForPeriod(bench, timePeriod);
 }
 
 export function getComfortLevel(score: number): string {

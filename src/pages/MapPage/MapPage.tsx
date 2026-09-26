@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Armchair, Info } from 'lucide-react';
 import { useBenchStore } from '@/store/useBenchStore';
-import { calculateComfortScore, getComfortColor } from '@/utils/comfort';
+import TimePeriodSelector from '@/components/TimePeriodSelector/TimePeriodSelector';
+import { calculateComfortScore, getComfortColor, isEstimatedComfort } from '@/utils/comfort';
 import type { Bench } from '@/types';
 
 export default function MapPage() {
-  const { benches, initialize, initialized } = useBenchStore();
+  const { benches, initialize, initialized, timePeriodFilter } = useBenchStore();
   const navigate = useNavigate();
   const [hoveredBench, setHoveredBench] = useState<Bench | null>(null);
 
@@ -40,6 +41,8 @@ export default function MapPage() {
         </p>
       </div>
 
+      <TimePeriodSelector />
+
       <div className="paper-texture rounded-xl shadow-paper overflow-hidden">
         <div className="relative w-full h-[600px] bg-gradient-to-br from-moss-green/5 via-warm-beige to-ochre/5">
           <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
@@ -59,8 +62,9 @@ export default function MapPage() {
 
           {benches.map((bench) => {
             const position = getPositionStyle(bench);
-            const comfortScore = calculateComfortScore(bench);
+            const comfortScore = calculateComfortScore(bench, timePeriodFilter);
             const colorClass = getComfortColor(comfortScore);
+            const estimated = isEstimatedComfort(bench, timePeriodFilter);
             
             return (
               <button
@@ -92,7 +96,9 @@ export default function MapPage() {
                       {bench.location}
                     </p>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-ink-light">舒适度</span>
+                      <span className="text-xs text-ink-light">
+                        舒适度{estimated && '（估算）'}
+                      </span>
                       <span className={`text-sm font-medium ${colorClass}`}>
                         {comfortScore}
                       </span>
